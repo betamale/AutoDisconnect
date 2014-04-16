@@ -1,19 +1,20 @@
 package com.example.autodisconnect;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.Fragment;
+import android.app.PendingIntent;
 import android.content.Context;
-import android.net.ConnectivityManager;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Switch;
 
 public class MainActivity extends Activity {
@@ -71,63 +72,44 @@ public class MainActivity extends Activity {
 		super.onResume();
 		try {
 			Switch ts = (Switch)findViewById(R.id.traffic_switch);
-			ts.setChecked(getMobileDataEnabled());
+			ts.setChecked(MobileDataFunctions.getMobileDataEnabled(getApplicationContext()));
 		} catch (Throwable t) {
 			Log.e("MainActivity.onResume", "caught: " + t);
 		}
 	}
 	
-	protected boolean getMobileDataEnabled() {
-		try {
-			final ConnectivityManager conman = (ConnectivityManager) getApplicationContext()
-					.getSystemService(Context.CONNECTIVITY_SERVICE);
-			final Class<?> conmanClass = Class.forName(conman.getClass()
-					.getName());
-			final Field iConnectivityManagerField = conmanClass
-					.getDeclaredField("mService");
-			iConnectivityManagerField.setAccessible(true);
-			final Object iConnectivityManager = iConnectivityManagerField
-					.get(conman);
-			final Class<?> iConnectivityManagerClass = Class
-					.forName(iConnectivityManager.getClass().getName());
-			final Method getMobileDataEnabledMethod = iConnectivityManagerClass
-					.getDeclaredMethod("getMobileDataEnabled");
-			getMobileDataEnabledMethod.setAccessible(true);
-
-			return (Boolean)getMobileDataEnabledMethod.invoke(
-					iConnectivityManager, (Object[]) null);
-		} catch (Throwable t) {
-			Log.e("MainActivity.getMobileDataEnabled", "caught: " + t);
-			return false;
-		}
-	}
-	
-	protected void setMobileDataEnabled(boolean value) {
-		try {
-			final ConnectivityManager conman = (ConnectivityManager) getApplicationContext()
-					.getSystemService(Context.CONNECTIVITY_SERVICE);
-			final Class<?> conmanClass = Class.forName(conman.getClass()
-					.getName());
-			final Field iConnectivityManagerField = conmanClass
-					.getDeclaredField("mService");
-			iConnectivityManagerField.setAccessible(true);
-			final Object iConnectivityManager = iConnectivityManagerField
-					.get(conman);
-			final Class<?> iConnectivityManagerClass = Class
-					.forName(iConnectivityManager.getClass().getName());
-			final Method setMobileDataEnabledMethod = iConnectivityManagerClass
-					.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
-			setMobileDataEnabledMethod.setAccessible(true);
-
-			setMobileDataEnabledMethod.invoke(iConnectivityManager, value);
-		} catch (Throwable t) {
-			Log.e("MainActivity.getMobileDataEnabled", "caught: " + t);
-		}
-	}
-	
 	public void onTrafficSwitchClick(View v) {
 		Switch s = (Switch)v;
-		setMobileDataEnabled(s.isChecked());
+		MobileDataFunctions.setMobileDataEnabled(getApplicationContext(), s.isChecked());
 	}
-
+	
+	public void onScheduleButtonClick(View v) {
+		
+        
+		final EditText et = (EditText)findViewById(R.id.edit_timespan);
+		final String text = et.getText().toString().trim();
+		final String[] split = text.split(":");
+		
+		long millis = 0;
+		if(split.length >= 4){
+			millis += Long.parseLong(split[split.length - 4]) * 24 * 60 * 60 * 1000;
+		}
+		if(split.length >= 3){
+			millis += Long.parseLong(split[split.length - 3]) * 60 * 60 * 1000;
+		}
+		if(split.length >= 2){
+			millis += Long.parseLong(split[split.length - 2]) * 60 * 1000;
+		}
+		if(split.length >= 1){
+			millis += Long.parseLong(split[split.length - 1]) * 1000;
+		}
+		Log.d("MainActivity.onScheduleButtonClick", "scheduling disconnect in " + millis + "ms");
+		millis += SystemClock.elapsedRealtime();
+				
+		Intent intent = new Intent(getApplicationContext(), DisconnectAlarmReceiver.class);
+		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+		
+		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+		am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,  millis, pi);
+	}
 }

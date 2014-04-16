@@ -18,4 +18,27 @@
         android:text="@string/traffic_switch_label"
         android:onClick="onTrafficSwitchClick" />
 
+    <EditText
+        android:id="@+id/edit_timespan"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="false"
+        android:layout_below="@+id/traffic_switch"
+        android:layout_marginTop="30dp"
+        android:ems="10"
+        android:inputType="time" />
+
+    <Button
+        android:id="@+id/schedule_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="false"
+        android:layout_alignRight="@+id/traffic_switch"
+        android:layout_below="@+id/edit_timespan"
+        android:layout_marginTop="15dp"
+        android:text="@string/schedule_button_text"
+        android:onClick="onScheduleButtonClick" />
+
 </RelativeLayout>

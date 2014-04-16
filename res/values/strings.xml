@@ -4,5 +4,6 @@
     <string name="app_name">AutoDisconnect</string>
     <string name="traffic_switch_label">mobile data traffic</string>
     <string name="action_settings">Settings</string>
+    <string name="schedule_button_text">schedule disconnect</string>
 
 </resources>
