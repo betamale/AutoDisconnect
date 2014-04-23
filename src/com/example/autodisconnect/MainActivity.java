@@ -11,6 +11,7 @@ import android.app.TimePickerDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -25,7 +26,9 @@ import android.widget.TimePicker;
 import android.widget.DatePicker;
 
 public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
-	private Calendar cal = Calendar.getInstance();
+	private Calendar editTime = Calendar.getInstance();
+	private Calendar schedTime;
+	private boolean scheduled = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -92,21 +95,35 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		} catch (Throwable t) {
 			Log.e("MainActivity.onResume", "caught: " + t);
 		}
+		
+		SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+		scheduled = sharedPref.getBoolean(getString(R.string.saved_schedule_state), false);
+		schedTime.setTimeInMillis(sharedPref.getLong(getString(R.string.saved_schedule_time), 0));
 	}
-	
+
+	@Override
+	protected void onPause() {
+		SharedPreferences sharedPref = getPreferences(
+				Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putBoolean(getString(R.string.saved_schedule_state), scheduled);
+		editor.putLong(getString(R.string.saved_schedule_time), schedTime.getTimeInMillis());
+		editor.commit();
+	}
+
 	public void onTrafficSwitchClick(View v) {
 		Switch s = (Switch)v;
 		MobileDataFunctions.setMobileDataEnabled(getApplicationContext(), s.isChecked());
 	}
 	
 	public void onScheduleButtonClick(View v) {        
-		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + cal);
+		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + editTime);
 						
 		Intent intent = new Intent(getApplicationContext(), DisconnectAlarmReceiver.class);
 		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 		
 		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-		am.set(AlarmManager.RTC_WAKEUP,  cal.getTimeInMillis(), pi);
+		am.set(AlarmManager.RTC_WAKEUP,  editTime.getTimeInMillis(), pi);
 	}
 	
 	public void showTimePickerDialog(View v) {
@@ -115,8 +132,8 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	public void onTimeSet(TimePicker view, int hour, int minute) {
-        cal.set(Calendar.HOUR_OF_DAY, hour);
-        cal.set(Calendar.MINUTE, minute);
+        editTime.set(Calendar.HOUR_OF_DAY, hour);
+        editTime.set(Calendar.MINUTE, minute);
         updateTimeView();
     }
 	
@@ -126,19 +143,19 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	public void onDateSet(DatePicker view, int year, int month, int day) {        
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month);
-        cal.set(Calendar.DAY_OF_MONTH, day);
+        editTime.set(Calendar.YEAR, year);
+        editTime.set(Calendar.MONTH, month);
+        editTime.set(Calendar.DAY_OF_MONTH, day);
         updateDateView();
     }
 	
 	protected void updateDateView() {
 		TextView tv = (TextView)findViewById(R.id.date_view);
-		tv.setText(DateFormat.getDateFormat(this).format(cal.getTime()));
+		tv.setText(DateFormat.getDateFormat(this).format(editTime.getTime()));
 	}
 	
 	protected void updateTimeView() {
 		TextView tv = (TextView)findViewById(R.id.time_view);
-		tv.setText(DateFormat.getTimeFormat(this).format(cal.getTime()));
+		tv.setText(DateFormat.getTimeFormat(this).format(editTime.getTime()));
 	}
 }
