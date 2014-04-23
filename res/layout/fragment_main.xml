@@ -17,28 +17,57 @@
         android:layout_alignParentTop="true"
         android:text="@string/traffic_switch_label"
         android:onClick="onTrafficSwitchClick" />
-
-    <EditText
-        android:id="@+id/edit_timespan"
-        android:layout_width="fill_parent"
+    
+    <TextView
+        android:id="@+id/date_view"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="false"
-        android:layout_below="@+id/traffic_switch"
-        android:layout_marginTop="30dp"
+        android:layout_below="@+id/time_view"
+        android:layout_marginTop="25dp"
         android:ems="10"
-        android:inputType="time" />
+        android:hint="@string/date_hint"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/datepicker_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/date_view"
+        android:layout_alignLeft="@+id/timepicker_button"
+        android:text="@string/datepicker_button_text"
+        android:onClick="showDatePickerDialog" />
 
     <Button
         android:id="@+id/schedule_button"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="false"
+        android:layout_alignRight="@+id/datepicker_button"
+        android:layout_below="@+id/datepicker_button"
+        android:layout_marginTop="31dp"
+        android:onClick="onScheduleButtonClick"
+        android:text="@string/schedule_button_text" />
+
+    <Button
+        android:id="@+id/timepicker_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/time_view"
         android:layout_alignRight="@+id/traffic_switch"
-        android:layout_below="@+id/edit_timespan"
-        android:layout_marginTop="15dp"
-        android:text="@string/schedule_button_text"
-        android:onClick="onScheduleButtonClick" />
+        android:onClick="showTimePickerDialog"
+        android:text="@string/timepicker_button_text" />
+
+    <TextView
+        android:id="@+id/time_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/date_view"
+        android:layout_below="@+id/traffic_switch"
+        android:layout_marginTop="41dp"
+        android:ems="10"
+        android:hint="@string/time_hint"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </RelativeLayout>

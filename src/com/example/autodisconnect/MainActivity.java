@@ -1,24 +1,32 @@
 package com.example.autodisconnect;
 
+import java.util.Calendar;
+
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.TimePicker;
+import android.widget.DatePicker;
 
-public class MainActivity extends Activity {
-
+public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
+	private Calendar cal = Calendar.getInstance();
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -67,6 +75,14 @@ public class MainActivity extends Activity {
 		}
 	}
 	
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		updateTimeView();
+		updateDateView();
+	}
+	
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -83,33 +99,46 @@ public class MainActivity extends Activity {
 		MobileDataFunctions.setMobileDataEnabled(getApplicationContext(), s.isChecked());
 	}
 	
-	public void onScheduleButtonClick(View v) {
-		
-        
-		final EditText et = (EditText)findViewById(R.id.edit_timespan);
-		final String text = et.getText().toString().trim();
-		final String[] split = text.split(":");
-		
-		long millis = 0;
-		if(split.length >= 4){
-			millis += Long.parseLong(split[split.length - 4]) * 24 * 60 * 60 * 1000;
-		}
-		if(split.length >= 3){
-			millis += Long.parseLong(split[split.length - 3]) * 60 * 60 * 1000;
-		}
-		if(split.length >= 2){
-			millis += Long.parseLong(split[split.length - 2]) * 60 * 1000;
-		}
-		if(split.length >= 1){
-			millis += Long.parseLong(split[split.length - 1]) * 1000;
-		}
-		Log.d("MainActivity.onScheduleButtonClick", "scheduling disconnect in " + millis + "ms");
-		millis += SystemClock.elapsedRealtime();
-				
+	public void onScheduleButtonClick(View v) {        
+		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + cal);
+						
 		Intent intent = new Intent(getApplicationContext(), DisconnectAlarmReceiver.class);
 		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 		
 		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-		am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,  millis, pi);
+		am.set(AlarmManager.RTC_WAKEUP,  cal.getTimeInMillis(), pi);
+	}
+	
+	public void showTimePickerDialog(View v) {
+	    DialogFragment newFragment = new TimePickerFragment();
+	    newFragment.show(getFragmentManager(), "timePicker");
+	}
+	
+	public void onTimeSet(TimePicker view, int hour, int minute) {
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.MINUTE, minute);
+        updateTimeView();
+    }
+	
+	public void showDatePickerDialog(View v) {
+	    DialogFragment newFragment = new DatePickerFragment();
+	    newFragment.show(getFragmentManager(), "datePicker");
+	}
+	
+	public void onDateSet(DatePicker view, int year, int month, int day) {        
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month);
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        updateDateView();
+    }
+	
+	protected void updateDateView() {
+		TextView tv = (TextView)findViewById(R.id.date_view);
+		tv.setText(DateFormat.getDateFormat(this).format(cal.getTime()));
+	}
+	
+	protected void updateTimeView() {
+		TextView tv = (TextView)findViewById(R.id.time_view);
+		tv.setText(DateFormat.getTimeFormat(this).format(cal.getTime()));
 	}
 }
