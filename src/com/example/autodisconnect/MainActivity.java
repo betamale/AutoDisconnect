@@ -27,7 +27,7 @@ import android.widget.DatePicker;
 
 public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 	private Calendar editTime = Calendar.getInstance();
-	private Calendar schedTime;
+	private Calendar schedTime = Calendar.getInstance();
 	private boolean scheduled = false;
 	
 	@Override
@@ -99,6 +99,7 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 		scheduled = sharedPref.getBoolean(getString(R.string.saved_schedule_state), false);
 		schedTime.setTimeInMillis(sharedPref.getLong(getString(R.string.saved_schedule_time), 0));
+		updateStatusView();
 	}
 
 	@Override
@@ -124,6 +125,9 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		
 		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
 		am.set(AlarmManager.RTC_WAKEUP,  editTime.getTimeInMillis(), pi);
+		schedTime = editTime;
+		scheduled = true;
+		updateStatusView();
 	}
 	
 	public void showTimePickerDialog(View v) {
@@ -157,5 +161,16 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	protected void updateTimeView() {
 		TextView tv = (TextView)findViewById(R.id.time_view);
 		tv.setText(DateFormat.getTimeFormat(this).format(editTime.getTime()));
+	}
+	
+	protected void updateStatusView() {
+		String state = getString(R.string.status_nothing_scheduled);
+		if(scheduled){
+			state = getString(R.string.status_scheduled_at) 
+					+ " " + DateFormat.getDateFormat(this).format(schedTime.getTime())
+					+ " " + DateFormat.getTimeFormat(this).format(schedTime.getTime());
+		}
+		TextView tv = (TextView)findViewById(R.id.status_view);
+		tv.setText(state);
 	}
 }

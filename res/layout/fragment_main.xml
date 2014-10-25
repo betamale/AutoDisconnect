@@ -67,5 +67,14 @@
         android:layout_marginTop="31dp"
         android:onClick="onScheduleButtonClick"
         android:text="@string/schedule_button_text" />
+    
+    <TextView
+        android:id="@+id/status_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/schedule_button"
+        android:layout_alignParentLeft="true"
+        android:hint="@string/status_hint"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </RelativeLayout>

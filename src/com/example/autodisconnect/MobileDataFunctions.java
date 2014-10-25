@@ -28,7 +28,7 @@ public class MobileDataFunctions {
 	
 			setMobileDataEnabledMethod.invoke(iConnectivityManager, value);
 		} catch (Throwable t) {
-			Log.e("MainActivity.getMobileDataEnabled", "caught: " + t);
+			Log.e("MobileDataFunctions.setMobileDataEnabled", "caught: " + t);
 		}
 	}
 
@@ -52,7 +52,7 @@ public class MobileDataFunctions {
 			return (Boolean)getMobileDataEnabledMethod.invoke(
 					iConnectivityManager, (Object[]) null);
 		} catch (Throwable t) {
-			Log.e("MainActivity.getMobileDataEnabled", "caught: " + t);
+			Log.e("MobileDataFunctions.getMobileDataEnabled", "caught: " + t);
 			return false;
 		}
 	}
