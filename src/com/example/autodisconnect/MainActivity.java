@@ -1,32 +1,28 @@
 package com.example.autodisconnect;
 
 import java.util.Calendar;
-
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.DatePicker;
 
 public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
-	private Calendar editTime = Calendar.getInstance();
+	protected Calendar editTime = Calendar.getInstance();
 	private Calendar schedTime = Calendar.getInstance();
 	private boolean scheduled = false;
 	
@@ -34,11 +30,17 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		
+		date_view = (TextView)findViewById(R.id.date_view);
+		time_view = (TextView)findViewById(R.id.time_view);
 
-		if (savedInstanceState == null) {
-			getFragmentManager().beginTransaction()
-					.add(R.id.container, new PlaceholderFragment()).commit();
-		}
+		watcher = new DaysHoursMinsWatcher(this);
+		days_edit =  (EditText) findViewById(R.id.days_edit);
+		days_edit.addTextChangedListener(new DaysHoursMinsWatcher(this));
+		hours_edit =  (EditText) findViewById(R.id.hours_edit);
+		hours_edit.addTextChangedListener(watcher);
+		minutes_edit =  (EditText) findViewById(R.id.minutes_edit);
+		minutes_edit.addTextChangedListener(watcher);
 	}
 
 	@Override
@@ -61,29 +63,10 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		return super.onOptionsItemSelected(item);
 	}
 
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
-	public static class PlaceholderFragment extends Fragment {
-
-		public PlaceholderFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_main, container,
-					false);
-			return rootView;
-		}
-	}
-	
-	
 	@Override
 	protected void onStart() {
 		super.onStart();
-		updateTimeView();
-		updateDateView();
+		updateDateAndTimeView();
 	}
 	
 	@Override
@@ -104,6 +87,7 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 
 	@Override
 	protected void onPause() {
+		super.onPause();
 		SharedPreferences sharedPref = getPreferences(
 				Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = sharedPref.edit();
@@ -117,10 +101,10 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		MobileDataFunctions.setMobileDataEnabled(getApplicationContext(), s.isChecked());
 	}
 	
-	public void onScheduleButtonClick(View v) {        
-		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + editTime);
+	public void onScheduleAtButtonClick(View v) {        
+		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + editTime + ".");
 						
-		Intent intent = new Intent(getApplicationContext(), DisconnectAlarmReceiver.class);
+		DisconnectIntent intent = new DisconnectIntent(getApplicationContext());
 		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
 		
 		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
@@ -130,37 +114,80 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		updateStatusView();
 	}
 	
+	public void onUnscheduleButtonClick(View v) {        
+		Log.d("MainActivity.onScheduleButtonClick", "Unscheduling planned disconnect.");
+		if(scheduled) {
+			Log.d("MainActivity.onScheduleButtonClick", "Disconnect was scheduled at " + schedTime + ".");
+		} else {
+			Log.d("MainActivity.onScheduleButtonClick", "No disconnect was scheduled. "
+					+ "Trying to remove all disconnect intents anyway.");
+		}
+
+		DisconnectIntent intent = new DisconnectIntent(getApplicationContext());
+		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+		
+		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+		am.cancel(pi);
+		scheduled = false;
+		updateStatusView();
+	}
+	
 	public void showTimePickerDialog(View v) {
 	    DialogFragment newFragment = new TimePickerFragment();
 	    newFragment.show(getFragmentManager(), "timePicker");
 	}
 	
 	public void onTimeSet(TimePicker view, int hour, int minute) {
-        editTime.set(Calendar.HOUR_OF_DAY, hour);
+		editTime.set(Calendar.HOUR_OF_DAY, hour);
         editTime.set(Calendar.MINUTE, minute);
-        updateTimeView();
+        updateDateAndTimeView();
+        updateDaysHoursMinsView();
     }
+	
+	public void setTime(int hour, int minute) {
+        
+        long now = Calendar.getInstance().getTimeInMillis();
+        if(editTime.getTimeInMillis() < now) {
+        	editTime.setTimeInMillis(now);
+        }
+	}
 	
 	public void showDatePickerDialog(View v) {
 	    DialogFragment newFragment = new DatePickerFragment();
 	    newFragment.show(getFragmentManager(), "datePicker");
 	}
 	
-	public void onDateSet(DatePicker view, int year, int month, int day) {        
+	public void onDateSet(DatePicker view, int year, int month, int day) {
         editTime.set(Calendar.YEAR, year);
         editTime.set(Calendar.MONTH, month);
         editTime.set(Calendar.DAY_OF_MONTH, day);
-        updateDateView();
-    }
-	
-	protected void updateDateView() {
-		TextView tv = (TextView)findViewById(R.id.date_view);
-		tv.setText(DateFormat.getDateFormat(this).format(editTime.getTime()));
+        preventThePast();
+        updateDateAndTimeView();
+        updateDaysHoursMinsView();
 	}
 	
-	protected void updateTimeView() {
-		TextView tv = (TextView)findViewById(R.id.time_view);
-		tv.setText(DateFormat.getTimeFormat(this).format(editTime.getTime()));
+	protected void updateDaysHoursMinsView() {
+        long nowmins = Calendar.getInstance().getTimeInMillis() / (1000 * 60);
+        long diffmins = (editTime.getTimeInMillis()) / (1000 * 60)  - nowmins;
+        long days = diffmins / (60 * 24);
+        long hours = (diffmins / 60) % 24;
+        long mins = diffmins % 60;
+        Log.d("MainActivity.onDateSet()", " " + days + " " + hours + " " + mins);
+        days_edit.setText(Long.toString(days));
+        hours_edit.setText(Long.toString(hours));
+        minutes_edit.setText(Long.toString(mins));
+    }
+	
+	public void preventThePast() {
+        long now = Calendar.getInstance().getTimeInMillis();
+        if(editTime.getTimeInMillis() < now) {
+        	editTime.setTimeInMillis(now);
+        }
+    }
+	
+	protected void updateDateAndTimeView() {
+		date_view.setText(DateFormat.getDateFormat(this).format(editTime.getTime()));
+		time_view.setText(DateFormat.getTimeFormat(this).format(editTime.getTime()));
 	}
 	
 	protected void updateStatusView() {
@@ -173,4 +200,11 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		TextView tv = (TextView)findViewById(R.id.status_view);
 		tv.setText(state);
 	}
+	
+	protected TextView date_view;
+	protected TextView time_view;
+	protected EditText days_edit;
+	protected EditText hours_edit;
+	protected EditText minutes_edit;
+	protected DaysHoursMinsWatcher watcher;
 }

@@ -1,8 +1,152 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.autodisconnect.MainActivity"
-    tools:ignore="MergeRootFrame" />
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.autodisconnect.MainActivity$PlaceholderFragment" >
+    
+    <Switch
+        android:id="@+id/traffic_switch"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:onClick="onTrafficSwitchClick"
+        android:text="@string/traffic_switch_label" />
 
+    <TextView
+        android:id="@+id/date_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/datepicker_button"
+        android:layout_alignParentLeft="true"
+        android:hint="@string/date_hint"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/datepicker_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/traffic_switch"
+        android:layout_marginTop="25dp"
+        android:layout_toRightOf="@id/date_view"
+        android:onClick="showDatePickerDialog"
+        android:text="@string/datepicker_button_text" />
+
+    <TextView
+        android:id="@+id/time_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/datepicker_button"
+        android:layout_toLeftOf="@+id/timepicker_button"
+        android:hint="@string/time_hint"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/timepicker_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/time_view"
+        android:layout_alignParentRight="true"
+        android:onClick="showTimePickerDialog"
+        android:text="@string/timepicker_button_text" />
+    
+    <TextView
+        android:id="@+id/days_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/days_edit"
+        android:layout_alignParentLeft="true"
+        android:text="@string/days_label"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    
+    <EditText
+        android:id="@+id/days_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/datepicker_button"
+        android:layout_toRightOf="@+id/days_label"
+        android:layout_marginTop="25dp"
+        android:text="@string/days_text"
+        android:inputType="numberDecimal"
+        android:digits="0123456789"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+    
+    <TextView
+        android:id="@+id/hours_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/days_edit"
+        android:layout_toRightOf="@+id/days_edit"
+        android:text="@string/hours_label"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+id/hours_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/days_edit"
+        android:layout_toRightOf="@+id/hours_label"
+        android:text="@string/hours_text"
+        android:inputType="numberDecimal"
+        android:digits="0123456789"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+    
+    <TextView
+        android:id="@+id/minutes_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/days_edit"
+        android:layout_toRightOf="@+id/hours_edit"
+        android:text="@string/minutes_label"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    
+    <EditText
+        android:id="@+id/minutes_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/days_edit"
+        android:layout_toRightOf="@+id/minutes_label"
+        android:text="@string/minutes_text"
+        android:inputType="numberDecimal"
+        android:digits="0123456789"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/schedule_at_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/days_edit"
+        android:layout_marginTop="31dp"
+        android:onClick="onScheduleAtButtonClick"
+        android:text="@string/schedule_at_button_text" />
+    
+    <Button
+        android:id="@+id/unschedule_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/schedule_at_button"
+        android:layout_marginTop="31dp"
+        android:onClick="onUnscheduleButtonClick"
+        android:text="@string/unschedule_button_text" />
+    
+    <TextView
+        android:id="@+id/status_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/unschedule_button"
+        android:layout_alignParentLeft="true"
+        android:hint="@string/status_text"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</RelativeLayout>
