@@ -17,12 +17,11 @@
 	<string name="hours_text">0</string>
 	<string name="minutes_label">mins:</string>
 	<string name="minutes_text">0</string>
-	<string name="status_text">no disconnect scheduled</string>
 	<string name="status_nothing_scheduled">no disconnect scheduled</string>
 	<string name="status_scheduled_at">disconnect scheduled at</string>
 	<string name="saved_schedule_state">saved_schedule_state</string>
 	<string name="saved_schedule_time">saved_schedule_time</string>
-	<string name="saved_edit_time">saved_saved_time</string>
+	<string name="saved_edit_time">saved_edit_time</string>
 	<string name="saved_days">saved_days</string>
 	<string name="saved_hours">saved_hours</string>
 	<string name="saved_minutes">saved_minutes</string>

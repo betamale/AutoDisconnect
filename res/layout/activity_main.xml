@@ -157,7 +157,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/unschedule_button"
         android:layout_alignParentLeft="true"
-        android:hint="@string/status_text"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </RelativeLayout>

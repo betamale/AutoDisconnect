@@ -74,6 +74,7 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	protected void onStart() {
 		super.onStart();
 		updateDateAndTimeView();
+		updateStatusView();
 	}
 	
 	@Override
@@ -214,9 +215,15 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	protected void updateStatusView() {
 		String state = getString(R.string.status_nothing_scheduled);
 		if(scheduled){
-			state = getString(R.string.status_scheduled_at) 
-					+ " " + DateFormat.getDateFormat(this).format(sched_time.getTime())
-					+ " " + DateFormat.getTimeFormat(this).format(sched_time.getTime());
+			if(!sched_time.after(Calendar.getInstance())) {
+				scheduled = false;
+			} else {
+				state = getString(R.string.status_scheduled_at)	+ " "
+						+ DateFormat.getDateFormat(this).format(
+								sched_time.getTime()) + " "
+						+ DateFormat.getTimeFormat(this).format(
+								sched_time.getTime());
+			}
 		}
 		TextView tv = (TextView)findViewById(R.id.status_view);
 		tv.setText(state);
