@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.format.DateFormat;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,9 +23,15 @@ import android.widget.TimePicker;
 import android.widget.DatePicker;
 
 public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
-	protected Calendar editTime = Calendar.getInstance();
-	protected Calendar schedTime = Calendar.getInstance();
+	protected Calendar edit_time = Calendar.getInstance();
+	protected Calendar sched_time = Calendar.getInstance();
 	protected boolean scheduled = false;
+	protected TextView date_view;
+	protected TextView time_view;
+	protected EditText days_edit;
+	protected EditText hours_edit;
+	protected EditText minutes_edit;
+	protected DaysHoursMinsWatcher watcher;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +88,16 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		
 		SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 		scheduled = sharedPref.getBoolean(getString(R.string.saved_schedule_state), false);
-		schedTime.setTimeInMillis(sharedPref.getLong(getString(R.string.saved_schedule_time), 0));
+		sched_time.setTimeInMillis(sharedPref.getLong(getString(R.string.saved_schedule_time), 0));
 		updateStatusView();
+		
+		edit_time.setTimeInMillis(sharedPref.getLong(getString(R.string.saved_edit_time), 0));
+		preventThePast();
+		updateDateAndTimeView();
+		
+		days_edit.setText(sharedPref.getString(getString(R.string.saved_days), "1"));
+		hours_edit.setText(sharedPref.getString(getString(R.string.saved_hours), "0"));
+		minutes_edit.setText(sharedPref.getString(getString(R.string.saved_minutes), "0"));
 	}
 
 	@Override
@@ -93,8 +106,15 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		SharedPreferences sharedPref = getPreferences(
 				Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = sharedPref.edit();
+		
 		editor.putBoolean(getString(R.string.saved_schedule_state), scheduled);
-		editor.putLong(getString(R.string.saved_schedule_time), schedTime.getTimeInMillis());
+		editor.putLong(getString(R.string.saved_schedule_time), sched_time.getTimeInMillis());
+		
+		editor.putLong(getString(R.string.saved_edit_time), edit_time.getTimeInMillis());
+		
+		editor.putString(getString(R.string.saved_days), days_edit.getText().toString());
+		editor.putString(getString(R.string.saved_hours), hours_edit.getText().toString());
+		editor.putString(getString(R.string.saved_minutes), minutes_edit.getText().toString());
 		editor.commit();
 	}
 
@@ -104,22 +124,40 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	public void onScheduleAtButtonClick(View v) {        
-		Log.d("MainActivity.onScheduleButtonClick", "Scheduling disconnect at " + editTime + ".");
-						
-		DisconnectIntent intent = new DisconnectIntent(getApplicationContext());
-		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+		scheduleDisconnectAt(edit_time);
+	}
+	
+	public void onScheduleInButtonClick(View v) {
+		int days;
+		int hours;
+		int mins;
+		try {
+			days = Integer.parseInt(days_edit.getText().toString());
+		} catch(Exception e) {
+			days = 0;
+		}
+		try {
+			hours = Integer.parseInt(hours_edit.getText().toString());
+		} catch(Exception e) {
+			hours = 0;
+		}
+		try {
+			mins = Integer.parseInt(minutes_edit.getText().toString());
+		} catch(Exception e) {
+			mins = 0;
+		}
 		
-		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-		am.set(AlarmManager.RTC_WAKEUP,  editTime.getTimeInMillis(), pi);
-		schedTime = editTime;
-		scheduled = true;
-		updateStatusView();
+		Calendar c = Calendar.getInstance();
+		c.add(Calendar.DAY_OF_MONTH, days);
+		c.add(Calendar.HOUR_OF_DAY, hours);
+		c.add(Calendar.MINUTE, mins);
+		scheduleDisconnectAt(c);
 	}
 	
 	public void onUnscheduleButtonClick(View v) {        
 		Log.d("MainActivity.onScheduleButtonClick", "Unscheduling planned disconnect.");
 		if(scheduled) {
-			Log.d("MainActivity.onScheduleButtonClick", "Disconnect was scheduled at " + schedTime + ".");
+			Log.d("MainActivity.onScheduleButtonClick", "Disconnect was scheduled at " + sched_time + ".");
 		} else {
 			Log.d("MainActivity.onScheduleButtonClick", "No disconnect was scheduled. "
 					+ "Trying to remove all disconnect intents anyway.");
@@ -134,90 +172,67 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 		updateStatusView();
 	}
 	
+	public void onTimeSet(TimePicker view, int hour, int minute) {
+		Log.d("MainActivity.onTimeSet()", hour + " " + minute);
+		edit_time.set(Calendar.HOUR_OF_DAY, hour);
+        edit_time.set(Calendar.MINUTE, minute);
+        preventThePast();
+        updateDateAndTimeView();
+    }
+	
+	public void onDateSet(DatePicker view, int year, int month, int day) {
+		Log.d("MainActivity.onDateSet()", year + " " + month + " " + day);
+        edit_time.set(Calendar.YEAR, year);
+        edit_time.set(Calendar.MONTH, month);
+        edit_time.set(Calendar.DAY_OF_MONTH, day);
+        preventThePast();
+        updateDateAndTimeView();
+    }
+	
 	public void showTimePickerDialog(View v) {
 	    DialogFragment newFragment = new TimePickerFragment();
 	    newFragment.show(getFragmentManager(), "timePicker");
 	}
 	
-	public void onTimeSet(TimePicker view, int hour, int minute) {
-		Log.d("MainActivity.onTimeSet()", hour + " " + minute);
-		editTime.set(Calendar.HOUR_OF_DAY, hour);
-        editTime.set(Calendar.MINUTE, minute);
-        Log.d("MainActivity.onTimeSet() 2", editTime.get(Calendar.HOUR_OF_DAY) + " " +
-        		editTime.get(Calendar.MINUTE));
-        preventThePast();
-        updateDateAndTimeView();
-        updateDaysHoursMinsView();
-        Log.d("MainActivity.onTimeSet() 3", editTime.get(Calendar.HOUR_OF_DAY) + " " +
-        		editTime.get(Calendar.MINUTE));
-    }
-	
 	public void showDatePickerDialog(View v) {
 	    DialogFragment newFragment = new DatePickerFragment();
 	    newFragment.show(getFragmentManager(), "datePicker");
 	}
-	
-	public void onDateSet(DatePicker view, int year, int month, int day) {
-		Log.d("MainActivity.onDateSet()", year + " " + month + " " + day);
-        editTime.set(Calendar.YEAR, year);
-        editTime.set(Calendar.MONTH, month);
-        editTime.set(Calendar.DAY_OF_MONTH, day);
-        preventThePast();
-        updateDateAndTimeView();
-        updateDaysHoursMinsView();
-	}
-	
-	protected void updateDaysHoursMinsView() {
-		Calendar diff = Calendar.getInstance();
-		Calendar now = Calendar.getInstance();
-		now.set(Calendar.SECOND, 0);
-		diff.setTimeInMillis(editTime.getTimeInMillis() - editTime.get(Calendar.DST_OFFSET)
-				- now.getTimeInMillis() - now.get(Calendar.DST_OFFSET));
-        long days = diff.getTimeInMillis() / DateUtils.DAY_IN_MILLIS;
-        long hours = diff.get(Calendar.HOUR_OF_DAY);
-        long mins = diff.get(Calendar.MINUTE);
-        Log.d("MainActivity.updateDaysHoursMinsView()", " " + days + " " + hours + " " + mins);
-        
-        days_edit.removeTextChangedListener(watcher);
-        hours_edit.removeTextChangedListener(watcher);
-        minutes_edit.removeTextChangedListener(watcher);
-        
-        days_edit.setText(Long.toString(days));
-        hours_edit.setText(Long.toString(hours));
-        minutes_edit.setText(Long.toString(mins));
-        
-        days_edit.addTextChangedListener(watcher);
-        hours_edit.addTextChangedListener(watcher);
-        minutes_edit.addTextChangedListener(watcher);
-    }
-	
+		
 	public void preventThePast() {
 		Calendar now = Calendar.getInstance();
-        if(editTime.before(now)) {
-        	editTime = now;
+        if(edit_time.before(now)) {
+        	edit_time = now;
         }
     }
 	
 	protected void updateDateAndTimeView() {
-		date_view.setText(DateFormat.getDateFormat(this).format(editTime.getTime()));
-		time_view.setText(DateFormat.getTimeFormat(this).format(editTime.getTime()));
+		date_view.setText(DateFormat.getDateFormat(this).format(edit_time.getTime()));
+		time_view.setText(DateFormat.getTimeFormat(this).format(edit_time.getTime()));
 	}
 	
 	protected void updateStatusView() {
 		String state = getString(R.string.status_nothing_scheduled);
 		if(scheduled){
 			state = getString(R.string.status_scheduled_at) 
-					+ " " + DateFormat.getDateFormat(this).format(schedTime.getTime())
-					+ " " + DateFormat.getTimeFormat(this).format(schedTime.getTime());
+					+ " " + DateFormat.getDateFormat(this).format(sched_time.getTime())
+					+ " " + DateFormat.getTimeFormat(this).format(sched_time.getTime());
 		}
 		TextView tv = (TextView)findViewById(R.id.status_view);
 		tv.setText(state);
 	}
 	
-	protected TextView date_view;
-	protected TextView time_view;
-	protected EditText days_edit;
-	protected EditText hours_edit;
-	protected EditText minutes_edit;
-	protected DaysHoursMinsWatcher watcher;
+	public void scheduleDisconnectAt(Calendar time) {        
+		Log.d("MainActivity.scheduleDisconnectAt(Calendar)", "Scheduling disconnect at " + time + ".");
+						
+		DisconnectIntent intent = new DisconnectIntent(getApplicationContext());
+		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+		
+		AlarmManager am =  (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+		am.set(AlarmManager.RTC_WAKEUP,  time.getTimeInMillis(), pi);
+		sched_time = time;
+		scheduled = true;
+		updateStatusView();
+	}
+
 }

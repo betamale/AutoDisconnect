@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/datepicker_button"
         android:layout_alignParentLeft="true"
-        android:hint="@string/date_hint"
+        android:text="@string/date_text"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <Button
@@ -44,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@id/datepicker_button"
         android:layout_toLeftOf="@+id/timepicker_button"
-        android:hint="@string/time_hint"
+        android:text="@string/time_text"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <Button
@@ -57,7 +57,18 @@
         android:onClick="showTimePickerDialog"
         android:text="@string/timepicker_button_text" />
     
-    <TextView
+    <Button
+        android:id="@+id/schedule_at_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/datepicker_button"
+        android:layout_marginTop="25dp"
+        android:onClick="onScheduleAtButtonClick"
+        android:text="@string/schedule_at_button_text" />
+    
+	<TextView
         android:id="@+id/days_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -70,7 +81,7 @@
         android:id="@+id/days_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/datepicker_button"
+        android:layout_below="@+id/schedule_at_button"
         android:layout_toRightOf="@+id/days_label"
         android:layout_marginTop="25dp"
         android:text="@string/days_text"
@@ -117,17 +128,17 @@
         android:inputType="numberDecimal"
         android:digits="0123456789"
         android:textAppearance="?android:attr/textAppearanceLarge" />
-
+    
     <Button
-        android:id="@+id/schedule_at_button"
+        android:id="@+id/schedule_in_button"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_below="@id/days_edit"
-        android:layout_marginTop="31dp"
+        android:layout_marginTop="25dp"
         android:onClick="onScheduleAtButtonClick"
-        android:text="@string/schedule_at_button_text" />
+        android:text="@string/schedule_in_button_text" />
     
     <Button
         android:id="@+id/unschedule_button"
@@ -135,8 +146,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/schedule_at_button"
-        android:layout_marginTop="31dp"
+        android:layout_below="@id/schedule_in_button"
+        android:layout_marginTop="25dp"
         android:onClick="onUnscheduleButtonClick"
         android:text="@string/unschedule_button_text" />
     

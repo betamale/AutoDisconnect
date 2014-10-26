@@ -36,7 +36,7 @@ public class DaysHoursMinsWatcher implements TextWatcher {
 		c.add(Calendar.DAY_OF_MONTH, days);
 		c.add(Calendar.HOUR_OF_DAY, hours);
 		c.add(Calendar.MINUTE, mins);
-		act.editTime.setTimeInMillis(c.getTimeInMillis());
+		act.edit_time.setTimeInMillis(c.getTimeInMillis());
 		act.updateDateAndTimeView();
 	}
 
