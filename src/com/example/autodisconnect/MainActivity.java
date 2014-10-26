@@ -1,6 +1,7 @@
 package com.example.autodisconnect;
 
 import java.util.Calendar;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.DialogFragment;
@@ -11,6 +12,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,8 +25,8 @@ import android.widget.DatePicker;
 
 public class MainActivity extends Activity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 	protected Calendar editTime = Calendar.getInstance();
-	private Calendar schedTime = Calendar.getInstance();
-	private boolean scheduled = false;
+	protected Calendar schedTime = Calendar.getInstance();
+	protected boolean scheduled = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -138,19 +140,17 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	public void onTimeSet(TimePicker view, int hour, int minute) {
+		Log.d("MainActivity.onTimeSet()", hour + " " + minute);
 		editTime.set(Calendar.HOUR_OF_DAY, hour);
         editTime.set(Calendar.MINUTE, minute);
+        Log.d("MainActivity.onTimeSet() 2", editTime.get(Calendar.HOUR_OF_DAY) + " " +
+        		editTime.get(Calendar.MINUTE));
+        preventThePast();
         updateDateAndTimeView();
         updateDaysHoursMinsView();
+        Log.d("MainActivity.onTimeSet() 3", editTime.get(Calendar.HOUR_OF_DAY) + " " +
+        		editTime.get(Calendar.MINUTE));
     }
-	
-	public void setTime(int hour, int minute) {
-        
-        long now = Calendar.getInstance().getTimeInMillis();
-        if(editTime.getTimeInMillis() < now) {
-        	editTime.setTimeInMillis(now);
-        }
-	}
 	
 	public void showDatePickerDialog(View v) {
 	    DialogFragment newFragment = new DatePickerFragment();
@@ -158,6 +158,7 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	public void onDateSet(DatePicker view, int year, int month, int day) {
+		Log.d("MainActivity.onDateSet()", year + " " + month + " " + day);
         editTime.set(Calendar.YEAR, year);
         editTime.set(Calendar.MONTH, month);
         editTime.set(Calendar.DAY_OF_MONTH, day);
@@ -167,21 +168,33 @@ public class MainActivity extends Activity implements TimePickerDialog.OnTimeSet
 	}
 	
 	protected void updateDaysHoursMinsView() {
-        long nowmins = Calendar.getInstance().getTimeInMillis() / (1000 * 60);
-        long diffmins = (editTime.getTimeInMillis()) / (1000 * 60)  - nowmins;
-        long days = diffmins / (60 * 24);
-        long hours = (diffmins / 60) % 24;
-        long mins = diffmins % 60;
-        Log.d("MainActivity.onDateSet()", " " + days + " " + hours + " " + mins);
+		Calendar diff = Calendar.getInstance();
+		Calendar now = Calendar.getInstance();
+		now.set(Calendar.SECOND, 0);
+		diff.setTimeInMillis(editTime.getTimeInMillis() - editTime.get(Calendar.DST_OFFSET)
+				- now.getTimeInMillis() - now.get(Calendar.DST_OFFSET));
+        long days = diff.getTimeInMillis() / DateUtils.DAY_IN_MILLIS;
+        long hours = diff.get(Calendar.HOUR_OF_DAY);
+        long mins = diff.get(Calendar.MINUTE);
+        Log.d("MainActivity.updateDaysHoursMinsView()", " " + days + " " + hours + " " + mins);
+        
+        days_edit.removeTextChangedListener(watcher);
+        hours_edit.removeTextChangedListener(watcher);
+        minutes_edit.removeTextChangedListener(watcher);
+        
         days_edit.setText(Long.toString(days));
         hours_edit.setText(Long.toString(hours));
         minutes_edit.setText(Long.toString(mins));
+        
+        days_edit.addTextChangedListener(watcher);
+        hours_edit.addTextChangedListener(watcher);
+        minutes_edit.addTextChangedListener(watcher);
     }
 	
 	public void preventThePast() {
-        long now = Calendar.getInstance().getTimeInMillis();
-        if(editTime.getTimeInMillis() < now) {
-        	editTime.setTimeInMillis(now);
+		Calendar now = Calendar.getInstance();
+        if(editTime.before(now)) {
+        	editTime = now;
         }
     }
 	
